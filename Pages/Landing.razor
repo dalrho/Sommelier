@@ -2,20 +2,55 @@
 @namespace Sommelier.Pages
 @inject NavigationManager Nav
 @inject SommelierState State
+@inject WineCatalog Catalog
+@inject SommelierJsInterop JsInterop
+@implements IDisposable
 
 <PageTitle>Sommelier — Every dish has its perfect pour</PageTitle>
 
 <section class="page landing">
+    <!-- Top Edition & Vault Status Line -->
     <div class="edition-line">
-        <span>THE PRIVATE TABLE</span>
-        <span>PAIRING NOTES · N° 01</span>
+        <div style="display: flex; align-items: center; gap: 24px;">
+            <span>THE PRIVATE TABLE</span>
+            <span>EDITION N° 01 · CELLAR RESERVE</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            @if (State.SavedTastingMenu.Count > 0)
+            {
+                <span class="edition-badge-live" @onclick='() => Nav.NavigateTo("/menu")'>
+                    <i></i> @State.SavedTastingMenu.Count BOTTLE@(State.SavedTastingMenu.Count > 1 ? "S" : "") IN TASTING FLIGHT →
+                </span>
+            }
+            <span style="color: #635b58;">VAULT: 13°C · 7 GRAND VINTAGES ACTIVE</span>
+        </div>
     </div>
     
+    <!-- Hero Grid with Interactive Inspiration and Notebook -->
     <header class="hero-grid">
         <div class="hero-copy">
-            <p class="eyebrow">Personal pairing consultation</p>
+            <p class="eyebrow">Personal sommelier consultation</p>
             <h1>Every dish has<br />its <em>perfect pour.</em></h1>
             <p class="lede">A considered pairing changes the whole table. Tell us what you’re serving and discover the bottle that brings it into focus.</p>
+
+            <!-- Quick Dish Inspiration Chips -->
+            <div class="hero-inspiration">
+                <span class="hero-inspiration-label">Instant Palate Inspiration:</span>
+                <div class="inspiration-chips">
+                    @foreach (var dish in _dishInspirations)
+                    {
+                        var isActive = string.Equals(_activeInspirationDish, dish.Name, StringComparison.OrdinalIgnoreCase);
+                        <button type="button" 
+                                class="inspire-chip @(isActive ? "active" : "")" 
+                                @onclick="() => SelectInspirationDish(dish)">
+                            <span>@dish.Icon</span>
+                            <span>@dish.Name</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Hero Primary Actions -->
             <div class="hero-actions">
                 <Button Kind="primary" OnClick='() => Nav.NavigateTo("/pair")'>
                     Pair Your Meal <span>→</span>
@@ -23,37 +58,434 @@
                 <button type="button" class="text-link" @onclick='() => Nav.NavigateTo("/builder")'>
                     Or build your own pairing
                 </button>
+                <button type="button" class="jump-link" @onclick="ScrollToTastingEngine">
+                    <span>↓</span> Explore Live Tasting Engine
+                </button>
             </div>
         </div>
         
+        <!-- Interactive Sommelier Notebook Aside -->
         <aside class="feature-pairing">
-            <p class="eyebrow">From the sommelier’s notebook</p>
-            <div class="bottle-mark" aria-hidden="true">
-                <i></i>
-                <span>R</span>
+            <div class="notebook-header">
+                <p class="eyebrow" style="margin: 0;">Sommelier’s Notebook</p>
+                <span class="feature-kicker" style="font-size: 9px;">CELLAR SPOTLIGHT</span>
             </div>
-            <p class="feature-kicker">Tonight’s consideration</p>
-            <h3>Riesling with<br />a little heat</h3>
-            <p>Residual sweetness softens spice. Acidity keeps the palate bright.</p>
-            <button type="button" @onclick="DiscoverTonightPairing">Discover the pairing →</button>
+
+            <!-- Varietal Selector Tabs -->
+            <div class="notebook-tabs">
+                @foreach (var wine in _notebookWines)
+                {
+                    var isSelected = string.Equals(_selectedNotebookWine.Name, wine.Name, StringComparison.OrdinalIgnoreCase);
+                    <button type="button" 
+                            class="notebook-tab @(isSelected ? "active" : "")" 
+                            @onclick="() => SelectNotebookWine(wine)">
+                        @wine.Name.Split(' ')[0]
+                    </button>
+                }
+            </div>
+
+            <!-- Dynamic Bottle Visualizer & Card -->
+            <div class="interactive-bottle-card">
+                <div class="bottle-stage">
+                    <div class="bottle-glow @_selectedNotebookWine.TypeCssClass"></div>
+                    
+                    <div class="svg-bottle-wrap" title="@_selectedNotebookWine.Name">
+                        <svg width="76" height="150" viewBox="0 0 76 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="whiteWineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ca8a04" />
+                                    <stop offset="40%" stop-color="#854d0e" />
+                                    <stop offset="100%" stop-color="#422006" />
+                                </linearGradient>
+                                <linearGradient id="redWineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#9f1239" />
+                                    <stop offset="40%" stop-color="#500724" />
+                                    <stop offset="100%" stop-color="#240310" />
+                                </linearGradient>
+                                <linearGradient id="sparklingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#eab308" />
+                                    <stop offset="40%" stop-color="#a16207" />
+                                    <stop offset="100%" stop-color="#583101" />
+                                </linearGradient>
+                                <linearGradient id="naGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#10b981" />
+                                    <stop offset="40%" stop-color="#047857" />
+                                    <stop offset="100%" stop-color="#064e3b" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Bottle Neck & Cork -->
+                            <rect x="30" y="8" width="16" height="38" rx="2" fill="#241b1d" stroke="#5d4d4f" stroke-width="1.5"/>
+                            <!-- Foil Capsule -->
+                            <rect x="29" y="8" width="18" height="16" rx="2" fill="@GetCapsuleColor(_selectedNotebookWine.Type)" />
+                            <line x1="29" y1="24" x2="47" y2="24" stroke="#d4af37" stroke-width="1.5"/>
+                            <!-- Bottle Shoulders & Body -->
+                            <path d="M30 46 C20 54 10 68 10 90 L10 138 C10 144 14 148 20 148 L56 148 C62 148 66 144 66 138 L66 90 C66 68 56 54 46 46 Z" 
+                                  fill="@GetLiquidFillColor(_selectedNotebookWine.Type)" 
+                                  stroke="#71615f" 
+                                  stroke-width="1.5"/>
+                            <!-- Glass Shimmer Highlight -->
+                            <path d="M16 88 L16 136 C16 140 18 143 22 143" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+                            <!-- Label -->
+                            <rect x="18" y="74" width="40" height="52" rx="3" fill="#f5efe6" stroke="#4a3f3b" stroke-width="1"/>
+                            <rect x="21" y="77" width="34" height="46" rx="2" fill="none" stroke="#b38b72" stroke-width="0.75" stroke-dasharray="2 2"/>
+                            <!-- Label Stamp -->
+                            <circle cx="38" cy="94" r="8" fill="#881337" opacity="0.85"/>
+                            <text x="38" y="97" font-family="Cormorant Garamond, serif" font-size="8" font-weight="600" fill="#f5efe6" text-anchor="middle">S</text>
+                            <text x="38" y="112" font-family="Inter, sans-serif" font-size="4.5" font-weight="600" fill="#2d2524" text-anchor="middle" letter-spacing="0.5">RESERVE</text>
+                            <!-- Rising Effervescence for Sparkling -->
+                            @if (_selectedNotebookWine.Type == WineType.Sparkling)
+                            {
+                                <circle cx="28" cy="130" r="1.5" fill="rgba(255,255,255,0.6)"/>
+                                <circle cx="46" cy="122" r="1" fill="rgba(255,255,255,0.7)"/>
+                                <circle cx="35" cy="108" r="1.5" fill="rgba(255,255,255,0.5)"/>
+                                <circle cx="42" cy="72" r="1" fill="rgba(255,255,255,0.7)"/>
+                            }
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="vintage-sub-bar">
+                    <span>@_selectedNotebookWine.Type</span>
+                    <span>·</span>
+                    <span>@_selectedNotebookWine.Abv</span>
+                    <span>·</span>
+                    <span>@_selectedNotebookWine.Temp</span>
+                </div>
+
+                <h3 style="margin: 6px 0 10px; font-size: 26px;">@_selectedNotebookWine.Name</h3>
+
+                <!-- Sensory Matrix Bars -->
+                <div class="sensory-matrix">
+                    <div class="sensory-gauge">
+                        <small>Body Density</small>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: @(_selectedNotebookWine.Body * 33.3)%;"></div>
+                        </div>
+                        <span>@_selectedNotebookWine.BodyDescription</span>
+                    </div>
+                    <div class="sensory-gauge">
+                        <small>Cellar Affinity</small>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: @(_selectedNotebookWine.Score)%; background: #f59e0b;"></div>
+                        </div>
+                        <span>@_selectedNotebookWine.Score% Compatibility</span>
+                    </div>
+                </div>
+
+                <!-- Tasting Notes Pills -->
+                <div class="notebook-notes-row">
+                    @foreach (var note in _selectedNotebookWine.Notes)
+                    {
+                        <span>@note</span>
+                    }
+                </div>
+
+                <p style="font-size: 14px; line-height: 1.5; color: #a8a29e; margin: 6px 0 12px; font-style: italic;">
+                    “@_selectedNotebookWine.Reason”
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="notebook-actions">
+                    <Button Kind="secondary" OnClick="() => State.OpenDetail(_selectedNotebookWine)">
+                        Inspect Bottle
+                    </Button>
+                    <Button Kind="primary" OnClick="() => State.AddWine(_selectedNotebookWine)">
+                        + Add to Menu
+                    </Button>
+                </div>
+            </div>
         </aside>
     </header>
 
+    <!-- Active Tasting Flight Banner (Shown when items in menu) -->
+    @if (State.SavedTastingMenu.Count > 0)
+    {
+        <div class="tasting-flight-banner">
+            <div class="tasting-flight-left">
+                <span class="tasting-flight-icon">🍷</span>
+                <div>
+                    <h4>Your Evening Tasting Menu</h4>
+                    <p>@State.MenuSummary curated for tonight's service.</p>
+                </div>
+            </div>
+            <div class="tasting-flight-actions">
+                <Button Kind="primary" OnClick='() => Nav.NavigateTo("/menu")'>
+                    View Complete Menu (@State.SavedTastingMenu.Count) →
+                </Button>
+            </div>
+        </div>
+    }
+
+    <!-- Interactive Section 1: The Palate & Pour Tasting Engine -->
+    <section class="landing-section" id="tasting-engine">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Interactive Cellar Station</p>
+                <h2>Tune the Palate. <em>Reveal the Pour.</em></h2>
+            </div>
+            <p class="section-intro-text">
+                Select the defining flavor dimensions of your dish below. Watch the sommelier engine dynamically re-score the cellar and pair the bottle in real time.
+            </p>
+        </div>
+
+        <div class="tasting-engine-box">
+            <!-- Preset Culinary Pairings -->
+            <div class="dish-preset-row">
+                <span class="preset-label">Signature Dishes:</span>
+                @foreach (var preset in _culinaryPresets)
+                {
+                    <button type="button" 
+                            class="preset-button" 
+                            @onclick="() => ApplyPreset(preset)">
+                        @preset.Name
+                    </button>
+                }
+                @if (_liveFlavors.Count > 0)
+                {
+                    <button type="button" 
+                            class="preset-button preset-clear" 
+                            @onclick="ClearLiveFlavors">
+                        ✕ Clear Palate
+                    </button>
+                }
+            </div>
+
+            <!-- Two-Column Engine Grid -->
+            <div class="engine-grid">
+                <!-- Flavor Selection Tiles -->
+                <div class="flavor-selection-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="flavor-panel-title">Defining Flavors of the Course:</span>
+                        <span style="font-size: 11px; color: #716b69;">@_liveFlavors.Count Selected</span>
+                    </div>
+
+                    <div class="flavor-tiles">
+                        @foreach (var flavor in FlavorConstants.AllFlavors)
+                        {
+                            var isSelected = _liveFlavors.Contains(flavor);
+                            <button type="button" 
+                                    class="flavor-tile @(isSelected ? "selected" : "")" 
+                                    @onclick="() => ToggleLiveFlavor(flavor)">
+                                <span>@flavor</span>
+                                <span class="tile-indicator">@(isSelected ? "✓" : "+")</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Live Recommendation Dossier Card -->
+                <div class="live-recommendation-dossier">
+                    @{
+                        var bestWine = GetCurrentRecommendedWine();
+                        var currentScore = Catalog.CalculateCompatibilityScore(bestWine, _liveFlavors);
+                    }
+                    
+                    <div>
+                        <div class="dossier-top">
+                            <div>
+                                <span class="dossier-type">@bestWine.Type · @bestWine.BodyDescription Body</span>
+                                <h3 class="dossier-wine-name">@bestWine.Name</h3>
+                            </div>
+                            <div class="dossier-match">
+                                <strong>@currentScore%</strong>
+                                <small>COMPATIBILITY</small>
+                            </div>
+                        </div>
+
+                        <div class="dossier-meta">
+                            <span>ABV: <b>@bestWine.Abv</b></span>
+                            <span>SERVE: <b>@bestWine.Temp</b></span>
+                            <span>GLASS: <b>@(bestWine.Type == WineType.Red ? "Bordeaux Stem" : bestWine.Type == WineType.Sparkling ? "Flute" : "White Stem")</b></span>
+                        </div>
+
+                        <p class="dossier-reason">
+                            “@bestWine.Reason”
+                        </p>
+
+                        <div class="dossier-notes">
+                            @foreach (var note in bestWine.Notes)
+                            {
+                                <span class="dossier-note">@note</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="dossier-actions">
+                        <Button Kind="primary" OnClick="() => LaunchConsultationWithLiveFlavors(bestWine)">
+                            Launch Full Consultation →
+                        </Button>
+                        <Button Kind="secondary" OnClick="() => State.AddWine(bestWine)">
+                            + Add to Tasting Menu
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Section 2: The Four Axioms of the Table -->
+    <section class="landing-section">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Pairing Philosophy</p>
+                <h2>The Four Axioms of <em>Harmonious Pairing</em></h2>
+            </div>
+            <p class="section-intro-text">
+                Great pairings are never accidental. They are anchored in culinary chemistry: the balance between lipid coatings, acidity, capsaicin, and tannins.
+            </p>
+        </div>
+
+        <div class="axioms-grid">
+            <!-- Axioms Navigation Tabs -->
+            <div class="axiom-nav">
+                @for (int i = 0; i < _axioms.Length; i++)
+                {
+                    var index = i;
+                    var axiom = _axioms[index];
+                    var isActive = _selectedAxiomIndex == index;
+                    <button type="button" 
+                            class="axiom-tab-btn @(isActive ? "active" : "")" 
+                            @onclick="() => _selectedAxiomIndex = index">
+                        <span>AXIOM @axiom.Numeral</span>
+                        <strong>@axiom.Title</strong>
+                    </button>
+                }
+            </div>
+
+            <!-- Active Axiom Dossier Card -->
+            <div class="axiom-display-card">
+                @{
+                    var activeAxiom = _axioms[_selectedAxiomIndex];
+                }
+                <div>
+                    <span class="eyebrow" style="color: #f59e0b; margin-bottom: 8px; display: block;">
+                        THE SOMMELIER’S DOCTRINE · AXIOM @activeAxiom.Numeral
+                    </span>
+                    <p class="axiom-principle-quote">“@activeAxiom.Principle”</p>
+
+                    <div class="axiom-breakdown">
+                        <div class="pitfall-box">
+                            <label>THE COMMON PITFALL</label>
+                            <p style="margin: 0;">@activeAxiom.Pitfall</p>
+                        </div>
+                        <div class="solution-box">
+                            <label>THE MASTERSTROKE</label>
+                            <p style="margin: 0;">@activeAxiom.Solution</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="axiom-bottle-preview">
+                    <div>
+                        <small>EXEMPLAR BOTTLE</small>
+                        <b>@activeAxiom.ExemplarWineName</b>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" 
+                                class="button secondary" 
+                                style="min-height: 38px; padding-inline: 16px; font-size: 11px;" 
+                                @onclick="() => TestAxiom(activeAxiom)">
+                            Simulate This Rule →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Section 3: Cellar Reserve (Signature Expressions) -->
+    <section class="landing-section">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">The Reserve Cellar</p>
+                <h2>Seven Signature <em>Expressions</em></h2>
+            </div>
+            <p class="section-intro-text">
+                Every bottle in our cellar is chosen for its structural clarity and versatility across multi-course dining.
+            </p>
+        </div>
+
+        <!-- Cellar Filter Tabs -->
+        <div class="cellar-filter-row">
+            <button type="button" 
+                    class="cellar-filter-btn @(_cellarFilter == "all" ? "active" : "")" 
+                    @onclick='() => _cellarFilter = "all"'>
+                All Vintages (7)
+            </button>
+            <button type="button" 
+                    class="cellar-filter-btn @(_cellarFilter == "red" ? "active" : "")" 
+                    @onclick='() => _cellarFilter = "red"'>
+                Reds
+            </button>
+            <button type="button" 
+                    class="cellar-filter-btn @(_cellarFilter == "white" ? "active" : "")" 
+                    @onclick='() => _cellarFilter = "white"'>
+                Whites
+            </button>
+            <button type="button" 
+                    class="cellar-filter-btn @(_cellarFilter == "special" ? "active" : "")" 
+                    @onclick='() => _cellarFilter = "special"'>
+                Sparkling & Non-Alcoholic
+            </button>
+        </div>
+
+        <!-- Cellar Cards Grid -->
+        <div class="cellar-card-grid">
+            @foreach (var wine in GetFilteredCellarWines())
+            {
+                <article class="cellar-vintage-card">
+                    <div>
+                        <div class="cellar-card-header">
+                            <span class="type @wine.TypeCssClass">@wine.Type</span>
+                            <span style="color: #f59e0b; font-family: 'Cormorant Garamond', serif; font-size: 20px;">@wine.Score%</span>
+                        </div>
+                        <h3 class="cellar-card-title">@wine.Name</h3>
+                        <div class="cellar-card-meta">
+                            <span>@wine.BodyDescription Body</span> · <span>@wine.Abv</span> · <span>@wine.Temp</span>
+                        </div>
+                        <p style="font-size: 13px; line-height: 1.5; color: #a8a29e; margin-bottom: 12px;">
+                            @wine.Reason
+                        </p>
+                    </div>
+
+                    <div>
+                        <div class="cellar-card-notes">
+                            @foreach (var note in wine.Notes)
+                            {
+                                <span>@note</span>
+                            }
+                        </div>
+                        <div class="cellar-card-footer">
+                            <Button Kind="secondary" OnClick="() => State.OpenDetail(wine)">
+                                Dossier
+                            </Button>
+                            <Button Kind="ghost" OnClick="() => State.AddWine(wine)">
+                                + Add to Menu
+                            </Button>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+
+    <!-- The Service Strip -->
     <div class="service-strip">
         <div>
             <strong>01</strong>
-            <span><b>Describe the dish</b><small>Choose its defining flavors</small></span>
+            <span><b>Describe the dish</b><small>Choose defining flavors and textures</small></span>
         </div>
         <div>
             <strong>02</strong>
-            <span><b>Consider the cellar</b><small>We rank bottles by balance</small></span>
+            <span><b>Consider the cellar</b><small>Our algorithm matches weight, acid, and tannin</small></span>
         </div>
         <div>
             <strong>03</strong>
-            <span><b>Set the table</b><small>Save a complete tasting menu</small></span>
+            <span><b>Set the table</b><small>Build and print a personalized tasting flight</small></span>
         </div>
     </div>
 
+    <!-- The Sommelier's Principle -->
     <div class="landing-quote">
         <p>“The right wine does not compete with the plate.<br />It completes the conversation.”</p>
         <span>THE SOMMELIER’S PRINCIPLE</span>
@@ -61,11 +493,202 @@
 </section>
 
 @code {
-    private void DiscoverTonightPairing()
+    private Wine _selectedNotebookWine = default!;
+    private List<Wine> _notebookWines = new();
+    private string _activeInspirationDish = string.Empty;
+    private HashSet<string> _liveFlavors = new(StringComparer.OrdinalIgnoreCase) { "Spicy", "Umami" };
+    private int _selectedAxiomIndex = 0;
+    private string _cellarFilter = "all";
+
+    private record DishInspiration(string Icon, string Name, string WineName, string[] Flavors);
+    private readonly DishInspiration[] _dishInspirations = new[]
+    {
+        new DishInspiration("🥩", "Dry-Aged Ribeye", "Cabernet Sauvignon", new[] { "Rich / Fatty", "Smoky" }),
+        new DishInspiration("🍜", "Dan Dan Noodles", "Riesling Grand Cru", new[] { "Spicy", "Umami" }),
+        new DishInspiration("🦪", "Seared Sea Scallops", "Champagne Brut Grand Cru", new[] { "Rich / Fatty", "Citrus / Acidic", "Salty" }),
+        new DishInspiration("🍄", "Truffle Morel Risotto", "Pinot Noir Reserve", new[] { "Umami", "Herbal" }),
+        new DishInspiration("🍋", "Hamachi Crudo", "Sancerre Sauvignon Blanc", new[] { "Citrus / Acidic", "Herbal" })
+    };
+
+    private record CulinaryPreset(string Name, string[] Flavors);
+    private readonly CulinaryPreset[] _culinaryPresets = new[]
+    {
+        new CulinaryPreset("Wagyu Ribeye & Char", new[] { "Rich / Fatty", "Smoky" }),
+        new CulinaryPreset("Szechuan Crispy Duck", new[] { "Spicy", "Umami" }),
+        new CulinaryPreset("Oysters & Mignonette", new[] { "Citrus / Acidic", "Salty" }),
+        new CulinaryPreset("Chanterelle Pappardelle", new[] { "Umami", "Herbal" }),
+        new CulinaryPreset("Dark Chocolate & Sea Salt", new[] { "Sweet", "Salty" })
+    };
+
+    private record PairingAxiom(string Numeral, string Title, string Principle, string Pitfall, string Solution, string ExemplarWineName, string[] Flavors);
+    private readonly PairingAxiom[] _axioms = new[]
+    {
+        new PairingAxiom(
+            "I",
+            "Acidity Cuts Richness",
+            "Acid slices through heavy lipid coatings like a squeeze of fresh lemon, refreshing the tongue after every decadent bite.",
+            "Serving a low-acid, heavy red with rich butter sauces coats the palate in grease, fatiguing the palate after just three bites.",
+            "Laser-bright champagne or flinty Sancerre strips away oil and richness, preparing the tongue for the next revelation.",
+            "Champagne Brut Grand Cru",
+            new[] { "Rich / Fatty", "Salty" }
+        ),
+        new PairingAxiom(
+            "II",
+            "Sweet Tames Spice",
+            "Capsaicin triggers heat receptors. High alcohol amplifies the burn, while natural fruit fructose acts as a soothing balm.",
+            "Pairing a 15% ABV high-tannin Cabernet with spicy curry turns delicate food into agonizing fire.",
+            "An off-dry Riesling at 11% ABV cools the capsaicin flame with delicate peach nectar while its acid cuts the rich curry.",
+            "Riesling Grand Cru",
+            new[] { "Spicy", "Umami" }
+        ),
+        new PairingAxiom(
+            "III",
+            "Weight Echoes Weight",
+            "The body of the wine must balance the intensity of the sauce. Neither partner must conquer or disappear.",
+            "Pouring a monolithic Barolo alongside poached sole or delicate carpaccio drowns the delicate fish completely.",
+            "Silky Pinot Noir echoes delicate roasted squab, duck breast, and wild foraged mushrooms with effortless poise.",
+            "Pinot Noir Reserve",
+            new[] { "Umami", "Herbal" }
+        ),
+        new PairingAxiom(
+            "IV",
+            "Tannins Embrace Protein",
+            "Polyphenolic tannins bind directly with animal proteins and melted fat, softening aggressive astringency into pure velvet.",
+            "Drinking a youthful, muscular Cabernet with lean steamed vegetables leaves the tongue puckered, dry, and bitter.",
+            "Prime dry-aged marbled steak breaks the tannin bonds, transforming the grape's astringency into dark cocoa silk.",
+            "Cabernet Sauvignon",
+            new[] { "Rich / Fatty", "Smoky" }
+        )
+    };
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateHasChanged;
+        var allWines = Catalog.GetAllWines().ToList();
+        _notebookWines = allWines.Take(5).ToList();
+        _selectedNotebookWine = _notebookWines.FirstOrDefault() ?? new Wine();
+    }
+
+    private void SelectInspirationDish(DishInspiration dish)
+    {
+        _activeInspirationDish = dish.Name;
+        var matchedWine = Catalog.GetWineByName(dish.WineName);
+        if (matchedWine != null)
+        {
+            _selectedNotebookWine = matchedWine;
+        }
+
+        _liveFlavors.Clear();
+        foreach (var flavor in dish.Flavors)
+        {
+            _liveFlavors.Add(flavor);
+        }
+    }
+
+    private void SelectNotebookWine(Wine wine)
+    {
+        _selectedNotebookWine = wine;
+    }
+
+    private void ToggleLiveFlavor(string flavor)
+    {
+        if (_liveFlavors.Contains(flavor))
+        {
+            _liveFlavors.Remove(flavor);
+        }
+        else
+        {
+            _liveFlavors.Add(flavor);
+        }
+    }
+
+    private void ClearLiveFlavors()
+    {
+        _liveFlavors.Clear();
+    }
+
+    private void ApplyPreset(CulinaryPreset preset)
+    {
+        _liveFlavors.Clear();
+        foreach (var f in preset.Flavors)
+        {
+            _liveFlavors.Add(f);
+        }
+    }
+
+    private Wine GetCurrentRecommendedWine()
+    {
+        var recommended = Catalog.GetRecommendedWines(_liveFlavors);
+        if (recommended.Count > 0)
+        {
+            return recommended[0];
+        }
+        return _selectedNotebookWine;
+    }
+
+    private void LaunchConsultationWithLiveFlavors(Wine wine)
     {
         State.ClearFlavors();
-        State.ToggleFlavor("Spicy");
-        State.ToggleFlavor("Umami");
+        foreach (var f in _liveFlavors)
+        {
+            State.ToggleFlavor(f);
+        }
         Nav.NavigateTo("/results");
+    }
+
+    private async Task ScrollToTastingEngine()
+    {
+        await JsInterop.ScrollToElementAsync("tasting-engine");
+    }
+
+    private void TestAxiom(PairingAxiom axiom)
+    {
+        _liveFlavors.Clear();
+        foreach (var f in axiom.Flavors)
+        {
+            _liveFlavors.Add(f);
+        }
+
+        var exemplar = Catalog.GetWineByName(axiom.ExemplarWineName);
+        if (exemplar != null)
+        {
+            _selectedNotebookWine = exemplar;
+        }
+
+        _ = ScrollToTastingEngine();
+    }
+
+    private IEnumerable<Wine> GetFilteredCellarWines()
+    {
+        var all = Catalog.GetAllWines();
+        return _cellarFilter switch
+        {
+            "red" => all.Where(w => string.Equals(w.Type, WineType.Red, StringComparison.OrdinalIgnoreCase)),
+            "white" => all.Where(w => string.Equals(w.Type, WineType.White, StringComparison.OrdinalIgnoreCase)),
+            "special" => all.Where(w => string.Equals(w.Type, WineType.Sparkling, StringComparison.OrdinalIgnoreCase) || 
+                                       string.Equals(w.Type, WineType.NonAlcoholic, StringComparison.OrdinalIgnoreCase)),
+            _ => all
+        };
+    }
+
+    private string GetCapsuleColor(string wineType) => wineType switch
+    {
+        WineType.Red => "#881337",
+        WineType.Sparkling => "#d4af37",
+        WineType.NonAlcoholic => "#059669",
+        _ => "#b38b72"
+    };
+
+    private string GetLiquidFillColor(string wineType) => wineType switch
+    {
+        WineType.Red => "url(#redWineGrad)",
+        WineType.Sparkling => "url(#sparklingGrad)",
+        WineType.NonAlcoholic => "url(#naGrad)",
+        _ => "url(#whiteWineGrad)"
+    };
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
     }
 }

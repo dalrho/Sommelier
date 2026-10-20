@@ -21,7 +21,14 @@
     </div>
 
     <div class="why">
-        Complements <em>Spicy</em> and <em>Umami</em>
+        @if (!string.IsNullOrWhiteSpace(Wine.Reason))
+        {
+            <span>@Wine.Reason</span>
+        }
+        else
+        {
+            <span>Complements <em>Spicy</em> and <em>Umami</em></span>
+        }
     </div>
 
     <div class="card-actions">
