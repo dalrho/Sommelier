@@ -266,3 +266,189 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {outline:2px sol
 .tasting-flight-banner h4 { font-family: "Cormorant Garamond", serif; font-size: 26px; margin: 0 0 4px; color: #f5efe6; font-weight: 500; }
 .tasting-flight-banner p { margin: 0; font-size: 12px; color: #a8a29e; }
 .tasting-flight-actions { display: flex; align-items: center; gap: 14px; }
+
+/* ── Cellar Carousel ──────────────────────────────────────────── */
+.cellar-carousel-section { }
+
+.cellar-carousel {
+    position: relative;
+    background: linear-gradient(140deg, #1a1214 0%, #110d0f 60%, #0f0b0c 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+}
+
+.carousel-slide-wrap {
+    padding: 56px 72px 44px;
+}
+
+/* counter */
+.carousel-counter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+}
+.carousel-counter-current { color: #f5efe6; font-size: 28px; line-height: 1; }
+.carousel-counter-sep { color: #3d3535; font-size: 20px; }
+.carousel-counter-total { color: #504848; font-size: 18px; }
+
+/* card two-column layout */
+.carousel-card {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 56px;
+    align-items: center;
+    animation: carouselFadeIn 0.35s ease both;
+}
+
+@keyframes carouselFadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* bottle column */
+.carousel-bottle-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 220px;
+}
+.carousel-bottle-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.35;
+    pointer-events: none;
+    transition: background 0.4s ease;
+}
+.carousel-bottle-glow.white   { background: radial-gradient(circle, #f59e0b, transparent 70%); }
+.carousel-bottle-glow.red     { background: radial-gradient(circle, #881337, transparent 70%); }
+.carousel-bottle-glow.sparkling { background: radial-gradient(circle, #fde047, transparent 70%); }
+.carousel-bottle-glow.non-alcoholic { background: radial-gradient(circle, #10b981, transparent 70%); }
+.carousel-bottle-svg { position: relative; z-index: 2; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.8)); transition: transform 0.3s ease; }
+.carousel-bottle-svg:hover { transform: scale(1.06) rotate(-1deg); }
+
+/* detail column */
+.carousel-detail-col { display: flex; flex-direction: column; }
+
+.carousel-wine-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.carousel-score {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 52px;
+    font-weight: 500;
+    color: #f59e0b;
+    line-height: 0.9;
+}
+.carousel-score small {
+    font-size: 18px;
+    vertical-align: super;
+    color: #a16207;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 500;
+}
+.carousel-wine-name {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 52px;
+    font-weight: 500;
+    line-height: 1;
+    color: #f5efe6;
+    margin: 0 0 20px;
+}
+
+.carousel-specs {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.carousel-specs span { display: flex; flex-direction: column; gap: 3px; font-size: 14px; color: #d9cec5; }
+.carousel-specs label { font-size: 9px; letter-spacing: 0.18em; color: #716b69; font-weight: 600; display: block; margin-bottom: 0; }
+
+.carousel-reason {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 20px;
+    line-height: 1.5;
+    color: #a8a29e;
+    font-style: italic;
+    margin: 0 0 20px;
+}
+
+.carousel-notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 28px;
+}
+.carousel-notes span {
+    font-size: 11px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 3px;
+    color: #c7c0bb;
+}
+
+.carousel-actions { display: flex; gap: 12px; }
+.carousel-actions .button { min-height: 48px; padding-inline: 24px; }
+
+/* dots */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 44px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+}
+.carousel-dot {
+    width: 28px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.12);
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.carousel-dot:hover { background: rgba(255,255,255,0.3); }
+.carousel-dot.active { background: #f59e0b; width: 44px; }
+
+/* prev / next arrows */
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #f5efe6;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.carousel-arrow:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); transform: translateY(-50%) scale(1.08); }
+.carousel-arrow:disabled { opacity: 0.2; cursor: not-allowed; }
+.carousel-arrow-prev { left: 18px; }
+.carousel-arrow-next { right: 18px; }
+
