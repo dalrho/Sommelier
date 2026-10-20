@@ -1,0 +1,61 @@
+@namespace Sommelier.Components
+
+<article class="wine-card @(Rank == 1 ? "top" : "")">
+    <span class="rank">@Rank.ToString("D2")</span>
+    
+    <div class="wine-main">
+        <span class="type @Wine.TypeCssClass">@Wine.Type</span>
+        <h3>@Wine.Name</h3>
+        <p>@string.Join(" · ", Wine.Notes)</p>
+    </div>
+
+    <div class="wine-body">
+        <small>BODY</small>
+        <BodyMeter Value="Wine.Body" />
+        <span>@Wine.BodyDescription</span>
+    </div>
+
+    <div class="match">
+        <strong>@Wine.Score%</strong>
+        <small>MATCH</small>
+    </div>
+
+    <div class="why">
+        Complements <em>Spicy</em> and <em>Umami</em>
+    </div>
+
+    <div class="card-actions">
+        <Button Kind="secondary" OnClick="HandleDetail">View Details</Button>
+        <Button Kind="ghost" OnClick="HandleAdd">Add to Tasting Menu</Button>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public Wine Wine { get; set; } = default!;
+
+    [Parameter]
+    public int Rank { get; set; } = 1;
+
+    [Parameter]
+    public EventCallback<Wine> OnDetail { get; set; }
+
+    [Parameter]
+    public EventCallback<Wine> OnAdd { get; set; }
+
+    private async Task HandleDetail()
+    {
+        if (OnDetail.HasDelegate)
+        {
+            await OnDetail.InvokeAsync(Wine);
+        }
+    }
+
+    private async Task HandleAdd()
+    {
+        if (OnAdd.HasDelegate)
+        {
+            await OnAdd.InvokeAsync(Wine);
+        }
+    }
+}

@@ -1,0 +1,13 @@
+@namespace Sommelier.Components
+
+<div class="empty">
+    <span>—</span>
+    <h2>Select a few flavors to begin</h2>
+    <p>Every memorable pairing starts with what’s on the plate.</p>
+    <Button Kind="primary" OnClick="OnClick">Choose flavors</Button>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+}

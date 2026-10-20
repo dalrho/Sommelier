@@ -1,0 +1,78 @@
+@page "/menu"
+@namespace Sommelier.Pages
+@inject NavigationManager Nav
+@inject SommelierState State
+@implements IDisposable
+
+<PageTitle>Sommelier — Your Tasting Menu</PageTitle>
+
+<section class="page menu">
+    <p class="eyebrow">Selected pairings</p>
+    <h2>Your Tasting Menu</h2>
+    <p class="menu-date">AN EVENING AT HOME · @DateTime.Now.Year</p>
+
+    @if (State.SavedTastingMenu.Count == 0)
+    {
+        <div class="menu-empty">
+            <h3>Your table is waiting.</h3>
+            <p>Build a considered sequence of dishes and drinks.</p>
+            <Button Kind="primary" OnClick='() => Nav.NavigateTo("/builder")'>Build your first pairing</Button>
+        </div>
+    }
+    else
+    {
+        <div class="courses">
+            @for (int i = 0; i < State.SavedTastingMenu.Count; i++)
+            {
+                var index = i;
+                var wine = State.SavedTastingMenu[index];
+                var dishTitle = !string.IsNullOrWhiteSpace(State.DishName) 
+                    ? State.DishName 
+                    : GetFallbackDish(index);
+                var flavorsPreview = State.SelectedFlavors.Count > 0 
+                    ? string.Join(" · ", State.SelectedFlavors.Take(3)) 
+                    : "Balanced · Textured";
+
+                <article>
+                    <span class="course-no">@((index + 1).ToString("D2"))</span>
+                    <div>
+                        <small>COURSE @(index + 1)</small>
+                        <h3>@dishTitle</h3>
+                        <p>@flavorsPreview</p>
+                    </div>
+                    <div class="course-wine">
+                        <small>@wine.Type.ToUpperInvariant()</small>
+                        <h3>@wine.Name</h3>
+                        <p>Serve at @wine.Temp</p>
+                    </div>
+                    <button type="button" @onclick="() => State.RemoveWine(wine.Name)">Remove</button>
+                    <em>“A pairing chosen for balance, contrast and a long finish.”</em>
+                </article>
+            }
+        </div>
+
+        <p class="summary">@State.MenuSummary</p>
+    }
+</section>
+
+@code {
+    private static readonly string[] FallbackDishes = new[]
+    {
+        "Miso glazed aubergine",
+        "Wild mushroom tart",
+        "Citrus cured trout"
+    };
+
+    private string GetFallbackDish(int index) => 
+        index < FallbackDishes.Length ? FallbackDishes[index] : "Chef's selection";
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
+    }
+}

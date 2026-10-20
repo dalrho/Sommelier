@@ -1,0 +1,82 @@
+@namespace Sommelier.Components
+
+@if (Wine != null)
+{
+    <div class="overlay" @onclick="HandleClose">
+        <aside @onclick:stopPropagation="true">
+            <div class="panel-top">
+                <p class="type @Wine.TypeCssClass">@Wine.Type</p>
+                <button type="button" @onclick="HandleClose" aria-label="Close details">Close ×</button>
+            </div>
+            
+            <h2>@Wine.Name</h2>
+            <p class="panel-sub">@Wine.BodyDescription body · @Wine.Abv ABV</p>
+            
+            <div class="rule"></div>
+            
+            <label>TASTING NOTES</label>
+            <div class="notes">
+                @foreach (var note in Wine.Notes)
+                {
+                    <span>@note</span>
+                }
+            </div>
+
+            <div class="stats">
+                <div>
+                    <small>ABV</small>
+                    <b>@Wine.Abv</b>
+                </div>
+                <div>
+                    <small>SERVE AT</small>
+                    <b>@Wine.Temp</b>
+                </div>
+                <div>
+                    <small>GLASSWARE</small>
+                    <b>@(Wine.Type == WineType.Red ? "Bordeaux / Red" : Wine.Type == WineType.Sparkling ? "Flute / Tulip" : "White wine")</b>
+                </div>
+            </div>
+
+            <div class="why-panel">
+                <label>WHY IT PAIRS</label>
+                <p>@Wine.Reason</p>
+                <div>
+                    <span>Spicy</span>
+                    <span>Umami</span>
+                </div>
+            </div>
+
+            <div class="panel-actions">
+                <Button Kind="primary" OnClick="HandleAdd">Add to Tasting Menu</Button>
+                <Button Kind="ghost" OnClick="HandleClose">Close</Button>
+            </div>
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Wine? Wine { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback<Wine> OnAdd { get; set; }
+
+    private async Task HandleClose()
+    {
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task HandleAdd()
+    {
+        if (Wine != null && OnAdd.HasDelegate)
+        {
+            await OnAdd.InvokeAsync(Wine);
+        }
+    }
+}

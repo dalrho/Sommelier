@@ -1,0 +1,29 @@
+@namespace Sommelier.Components
+@inject NavigationManager Nav
+
+<footer>
+    <div class="footer-main">
+        <div>
+            <button type="button" class="footer-wordmark" @onclick='() => Nav.NavigateTo("/")'>Sommelier</button>
+            <p>Thoughtful pairings for memorable tables.</p>
+        </div>
+        <div>
+            <span>EXPLORE</span>
+            <button type="button" @onclick='() => Nav.NavigateTo("/pair")'>Pair a Meal</button>
+            <button type="button" @onclick='() => Nav.NavigateTo("/builder")'>Pairing Builder</button>
+        </div>
+        <div>
+            <span>YOUR TABLE</span>
+            <button type="button" @onclick='() => Nav.NavigateTo("/menu")'>Tasting Menu</button>
+            <button type="button" @onclick='() => Nav.NavigateTo("/results")'>Recommendations</button>
+        </div>
+        <div class="footer-note">
+            <span>THE HOUSE NOTE</span>
+            <p>Balance first. Contrast second.<br />Always serve with good company.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; @DateTime.Now.Year SOMMELIER</span>
+        <span>PLEASE ENJOY RESPONSIBLY</span>
+    </div>
+</footer>

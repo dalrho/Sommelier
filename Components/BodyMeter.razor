@@ -1,0 +1,13 @@
+@namespace Sommelier.Components
+
+<div class="body-meter">
+    @for (int i = 1; i <= 3; i++)
+    {
+        <i class="@(i <= Value ? "filled" : "")"></i>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Value { get; set; } = 1;
+}

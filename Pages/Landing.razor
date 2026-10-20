@@ -1,0 +1,71 @@
+@page "/"
+@namespace Sommelier.Pages
+@inject NavigationManager Nav
+@inject SommelierState State
+
+<PageTitle>Sommelier — Every dish has its perfect pour</PageTitle>
+
+<section class="page landing">
+    <div class="edition-line">
+        <span>THE PRIVATE TABLE</span>
+        <span>PAIRING NOTES · N° 01</span>
+    </div>
+    
+    <header class="hero-grid">
+        <div class="hero-copy">
+            <p class="eyebrow">Personal pairing consultation</p>
+            <h1>Every dish has<br />its <em>perfect pour.</em></h1>
+            <p class="lede">A considered pairing changes the whole table. Tell us what you’re serving and discover the bottle that brings it into focus.</p>
+            <div class="hero-actions">
+                <Button Kind="primary" OnClick='() => Nav.NavigateTo("/pair")'>
+                    Pair Your Meal <span>→</span>
+                </Button>
+                <button type="button" class="text-link" @onclick='() => Nav.NavigateTo("/builder")'>
+                    Or build your own pairing
+                </button>
+            </div>
+        </div>
+        
+        <aside class="feature-pairing">
+            <p class="eyebrow">From the sommelier’s notebook</p>
+            <div class="bottle-mark" aria-hidden="true">
+                <i></i>
+                <span>R</span>
+            </div>
+            <p class="feature-kicker">Tonight’s consideration</p>
+            <h3>Riesling with<br />a little heat</h3>
+            <p>Residual sweetness softens spice. Acidity keeps the palate bright.</p>
+            <button type="button" @onclick="DiscoverTonightPairing">Discover the pairing →</button>
+        </aside>
+    </header>
+
+    <div class="service-strip">
+        <div>
+            <strong>01</strong>
+            <span><b>Describe the dish</b><small>Choose its defining flavors</small></span>
+        </div>
+        <div>
+            <strong>02</strong>
+            <span><b>Consider the cellar</b><small>We rank bottles by balance</small></span>
+        </div>
+        <div>
+            <strong>03</strong>
+            <span><b>Set the table</b><small>Save a complete tasting menu</small></span>
+        </div>
+    </div>
+
+    <div class="landing-quote">
+        <p>“The right wine does not compete with the plate.<br />It completes the conversation.”</p>
+        <span>THE SOMMELIER’S PRINCIPLE</span>
+    </div>
+</section>
+
+@code {
+    private void DiscoverTonightPairing()
+    {
+        State.ClearFlavors();
+        State.ToggleFlavor("Spicy");
+        State.ToggleFlavor("Umami");
+        Nav.NavigateTo("/results");
+    }
+}

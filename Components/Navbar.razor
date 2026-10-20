@@ -1,0 +1,42 @@
+@namespace Sommelier.Components
+@inject NavigationManager Nav
+@inject SommelierState State
+@implements IDisposable
+
+<nav>
+    <button type="button" class="wordmark" @onclick='() => Nav.NavigateTo("/")'>Sommelier</button>
+    <div class="nav-links">
+        <button type="button" class="@(IsCurrent("") ? "current" : "")" @onclick='() => Nav.NavigateTo("/")'>Home</button>
+        <button type="button" class="@(IsCurrent("pair") || IsCurrent("results") ? "current" : "")" @onclick='() => Nav.NavigateTo("/pair")'>Pair a Meal</button>
+        <button type="button" class="@(IsCurrent("builder") ? "current" : "")" @onclick='() => Nav.NavigateTo("/builder")'>Pairing Builder</button>
+        <button type="button" class="@(IsCurrent("menu") ? "current" : "")" @onclick='() => Nav.NavigateTo("/menu")'>
+            Tasting Menu <sup>@State.SavedTastingMenu.Count</sup>
+        </button>
+    </div>
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateHasChanged;
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    private bool IsCurrent(string route)
+    {
+        var relative = Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
+        var cleanRoute = route.Trim('/');
+        return string.Equals(relative, cleanRoute, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

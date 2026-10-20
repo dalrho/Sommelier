@@ -1,0 +1,21 @@
+@namespace Sommelier.Components
+
+<button class="@CssClass" @onclick="OnClick" @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string Kind { get; set; } = "primary";
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => $"button {Kind}".Trim();
+}

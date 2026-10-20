@@ -1,0 +1,18 @@
+@namespace Sommelier.Components
+
+<button class="@CssClass" @onclick="OnClick">
+    <span>@(Active ? "✓" : "○")</span>@Name
+</button>
+
+@code {
+    [Parameter]
+    public string Name { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Active { get; set; }
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    private string CssClass => $"flavor-tag {(Active ? "active" : "")}".Trim();
+}

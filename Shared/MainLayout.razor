@@ -1,0 +1,37 @@
+@inherits LayoutComponentBase
+@namespace Sommelier.Shared
+@inject SommelierState State
+@implements IDisposable
+
+<main>
+    <Navbar />
+    
+    @Body
+
+    <WineDetailModal Wine="State.ActiveDetailWine" 
+                     OnClose="State.CloseDetail" 
+                     OnAdd="HandleAddFromDetail" />
+                     
+    <ToastNotification />
+    
+    <Footer />
+</main>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += StateHasChanged;
+        await State.InitializeFromStorageAsync();
+    }
+
+    private void HandleAddFromDetail(Wine wine)
+    {
+        State.AddWine(wine);
+        State.CloseDetail();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,23 @@
+@namespace Sommelier.Components
+@inject NavigationManager Nav
+@inject SommelierState State
+
+@if (State.IsToastVisible)
+{
+    <div class="toast" role="status" aria-live="polite">
+        <span>✓</span>
+        <div>
+            <b>Added to Tasting Menu</b>
+            <small>Your pairing has been saved.</small>
+        </div>
+        <button type="button" @onclick="NavigateToMenu">View menu →</button>
+    </div>
+}
+
+@code {
+    private void NavigateToMenu()
+    {
+        State.DismissToast();
+        Nav.NavigateTo("/menu");
+    }
+}

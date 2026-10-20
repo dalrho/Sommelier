@@ -1,0 +1,64 @@
+@page "/pair"
+@namespace Sommelier.Pages
+@inject NavigationManager Nav
+@inject SommelierState State
+@implements IDisposable
+
+<PageTitle>Sommelier — Pair a Meal</PageTitle>
+
+<section class="page pair-page">
+    <div class="form-block">
+        <div class="form-intro" id="pairing-form">
+            <div>
+                <p class="eyebrow">Your consultation</p>
+                <h2>Pair a Meal</h2>
+            </div>
+            <p>Start with the character of the dish, not the ingredients. Select everything that feels essential.</p>
+        </div>
+
+        <label for="dish">DISH NAME <span>OPTIONAL</span></label>
+        <input id="dish" 
+               type="text" 
+               value="@State.DishName" 
+               @oninput="e => State.SetDish(e.Value?.ToString() ?? string.Empty)" 
+               placeholder="e.g. Miso glazed aubergine" />
+
+        <div class="flavor-heading">
+            <label>CHOOSE THE FLAVORS</label>
+            <span>
+                @State.SelectedFlavors.Count selected · 
+                <button type="button" @onclick="State.ClearFlavors">Clear all</button>
+            </span>
+        </div>
+
+        <div class="flavors">
+            @foreach (var flavor in FlavorConstants.AllFlavors)
+            {
+                <FlavorTag Name="@flavor" 
+                           Active="@State.SelectedFlavors.Contains(flavor)" 
+                           OnClick="() => State.ToggleFlavor(flavor)" />
+            }
+        </div>
+
+        <div class="home-actions">
+            <Button Kind="primary" OnClick='() => Nav.NavigateTo("/results")'>
+                Find My Pairing <span>→</span>
+            </Button>
+            <button type="button" class="text-link" @onclick='() => Nav.NavigateTo("/builder")'>
+                Build a pairing manually
+            </button>
+        </div>
+    </div>
+</section>
+
+@code {
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
+    }
+}

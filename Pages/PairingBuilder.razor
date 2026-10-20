@@ -1,0 +1,93 @@
+@page "/builder"
+@namespace Sommelier.Pages
+@inject NavigationManager Nav
+@inject SommelierState State
+@inject WineCatalog Catalog
+@implements IDisposable
+
+<PageTitle>Sommelier — Pairing Builder</PageTitle>
+
+<section class="page builder">
+    <p class="eyebrow">Compose your own</p>
+    <h2>Pairing Builder</h2>
+
+    <div class="builder-grid">
+        <div>
+            <h3>Your Dish</h3>
+            <label>DISH NAME</label>
+            <input type="text" 
+                   value="@State.DishName" 
+                   @oninput="e => State.SetDish(e.Value?.ToString() ?? string.Empty)" 
+                   placeholder="Name your dish" />
+
+            <label>FLAVOR PROFILE</label>
+            <div class="flavors compact">
+                @foreach (var flavor in FlavorConstants.AllFlavors)
+                {
+                    <FlavorTag Name="@flavor" 
+                               Active="@State.SelectedFlavors.Contains(flavor)" 
+                               OnClick="() => State.ToggleFlavor(flavor)" />
+                }
+            </div>
+        </div>
+
+        <div>
+            <h3>Your Wine</h3>
+            <label>SELECT A BOTTLE</label>
+            <div class="wine-picker">
+                @foreach (var wine in Catalog.GetAllWines())
+                {
+                    var isChosen = string.Equals(State.BuilderWine.Name, wine.Name, StringComparison.OrdinalIgnoreCase);
+                    <button type="button" 
+                            class="@(isChosen ? "chosen" : "")" 
+                            @onclick="() => State.SetBuilderWine(wine)">
+                        <span>
+                            <b>@wine.Name</b>
+                            <small>@wine.Type · @wine.Abv</small>
+                        </span>
+                        <i></i>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="preview">
+        <div>
+            <small>YOUR DISH</small>
+            <b>@(string.IsNullOrWhiteSpace(State.DishName) ? "Untitled dish" : State.DishName)</b>
+        </div>
+        <span class="gold-line"></span>
+        <strong>93%</strong>
+        <span class="gold-line"></span>
+        <div>
+            <small>YOUR WINE</small>
+            <b>@State.BuilderWine.Name</b>
+        </div>
+    </div>
+
+    <label>PAIRING NOTES</label>
+    <textarea @bind="pairingNote" placeholder="What makes this pairing sing?"></textarea>
+
+    <Button Kind="primary" OnClick="SaveAndNavigate">Save to Tasting Menu</Button>
+</section>
+
+@code {
+    private string pairingNote = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateHasChanged;
+    }
+
+    private void SaveAndNavigate()
+    {
+        State.AddWine(State.BuilderWine);
+        Nav.NavigateTo("/menu");
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
+    }
+}

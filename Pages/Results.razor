@@ -1,0 +1,58 @@
+@page "/results"
+@namespace Sommelier.Pages
+@inject NavigationManager Nav
+@inject SommelierState State
+@inject WineCatalog Catalog
+@implements IDisposable
+
+<PageTitle>Sommelier — Pairing Recommendations</PageTitle>
+
+<section class="page results">
+    <button type="button" class="back" @onclick='() => Nav.NavigateTo("/pair")'>
+        ← Refine flavors
+    </button>
+
+    @if (State.SelectedFlavors.Count == 0)
+    {
+        <EmptyState OnClick='() => Nav.NavigateTo("/pair")' />
+    }
+    else
+    {
+        var recommendations = Catalog.GetRecommendedWines(State.SelectedFlavors);
+
+        <div class="results-title">
+            <div>
+                <p class="eyebrow">Curated for your table</p>
+                <h2>
+                    Top matches for<br />
+                    <em>@State.TitleTags</em>
+                </h2>
+            </div>
+            <p>@recommendations.Count recommendations, ranked by compatibility</p>
+        </div>
+
+        <div class="wine-list">
+            @for (int i = 0; i < recommendations.Count; i++)
+            {
+                var index = i;
+                var wine = recommendations[index];
+                <WineCard Wine="wine" 
+                          Rank="index + 1" 
+                          OnDetail="w => State.OpenDetail(w)" 
+                          OnAdd="w => State.AddWine(w)" />
+            }
+        </div>
+    }
+</section>
+
+@code {
+    protected override void OnInitialized()
+    {
+        State.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= StateHasChanged;
+    }
+}
